@@ -22,7 +22,7 @@ func NewStorageService(db repository.Storage) *StorageService {
 
 func (s *StorageService) GetProduct(productID string) (*types.ProductResp, error) {
 	if !IsValidUUID(productID) {
-		return nil, echo.ErrBadRequest
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "no such product")
 	}
 
 	product, err := s.db.GetProduct(productID)
@@ -42,10 +42,16 @@ func (s *StorageService) NewProduct(newProduct *types.Product, productProperty [
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "select a category")
 	}
 
-	_, err := s.db.GetCategory(newProduct.CategoryID)
-	if err != nil {
+	if _, err := s.db.GetCategory(newProduct.CategoryID); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, echo.NewHTTPError(http.StatusBadRequest, "need valid category id")
+		}
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	if _, err := s.db.GetProductByName(newProduct.CategoryID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "this product is already in the database")
 		}
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -59,9 +65,7 @@ func (s *StorageService) NewProduct(newProduct *types.Product, productProperty [
 
 	if len(productProperty) != 0 {
 		for _, prop := range productProperty {
-			property, err := s.db.AddProperty(tx, &types.Property{
-				Name: prop.Name,
-			})
+			property, err := s.db.AddProperty(tx, &types.Property{Name: prop.Name})
 			if err != nil {
 				return nil, echo.ErrInternalServerError
 			}
@@ -98,6 +102,56 @@ func (s *StorageService) NewCategory(newCategory *types.Category) (*types.Catego
 	}
 
 	return category, nil
+}
+
+func (s *StorageService) UpdateProduct(product *types.Product, productProperty []types.ProductPropertyResp) (*types.ProductResp, error) {
+	if !IsValidUUID(product.ID) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "no such product")
+	}
+
+	if _, err := s.db.GetProduct(product.ID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "no such product")
+		}
+		return nil, echo.ErrInternalServerError
+	}
+
+	tx := s.db.Begin()
+
+	if _, err := s.db.UpdateProduct(tx, product); err != nil {
+		return nil, echo.ErrInternalServerError
+	}
+
+	arrPropertyID := make([]string, 0)
+	for _, prop := range productProperty {
+		property, err := s.db.AddProperty(tx, &types.Property{Name: prop.Name})
+		if err != nil {
+			return nil, echo.ErrInternalServerError
+		}
+
+		if err = s.db.AddProductProperty(tx, &types.ProductProperty{
+			ProductID:  product.ID,
+			PropertyID: property.ID,
+			Value:      prop.Value,
+		}); err != nil {
+			return nil, echo.ErrInternalServerError
+		}
+
+		arrPropertyID = append(arrPropertyID, property.ID)
+	}
+
+	if err := s.db.DeleteOldProductProperties(tx, product.ID, arrPropertyID); err != nil {
+		return nil, echo.ErrInternalServerError
+	}
+
+	tx.Commit()
+
+	productResp, err := s.db.GetProduct(product.ID)
+	if err != nil {
+		return nil, echo.ErrInternalServerError
+	}
+
+	return productResp, nil
 }
 
 func IsValidUUID(u string) bool {

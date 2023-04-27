@@ -59,3 +59,15 @@ type ProductResp struct {
 	UpdatedAt      time.Time             `json:"updated_at" gorm:"column:updated_at"`
 	DeletedAt      gorm.DeletedAt        `json:"deleted_at" gorm:"column:deleted_at"`
 }
+
+type ReqCategory struct {
+	Name     string `json:"name"`
+	ParentID string `json:"parent_id"`
+}
+
+type ReqProduct struct {
+	Name       string                `json:"name"`
+	Price      int                   `json:"price"`
+	CategoryID string                `json:"category_id"`
+	Properties []ProductPropertyResp `json:"properties"`
+}

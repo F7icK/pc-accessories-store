@@ -11,13 +11,8 @@ func (h *Handlers) GetCategories(c echo.Context) error {
 	return nil
 }
 
-type reqCategory struct {
-	Name     string `json:"name"`
-	ParentID string `json:"parent_id"`
-}
-
 func (h *Handlers) AddCategory(c echo.Context) error {
-	newCategory := new(reqCategory)
+	newCategory := new(types.ReqCategory)
 
 	if err := c.Bind(newCategory); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -49,15 +44,8 @@ func (h *Handlers) GetProduct(c echo.Context) error {
 	return c.JSON(http.StatusOK, product)
 }
 
-type reqProduct struct {
-	Name       string                      `json:"name"`
-	Price      int                         `json:"price"`
-	CategoryID string                      `json:"category_id"`
-	Properties []types.ProductPropertyResp `json:"properties"`
-}
-
 func (h *Handlers) AddProduct(c echo.Context) error {
-	newProduct := new(reqProduct)
+	newProduct := new(types.ReqProduct)
 
 	if err := c.Bind(newProduct); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -76,7 +64,26 @@ func (h *Handlers) AddProduct(c echo.Context) error {
 }
 
 func (h *Handlers) UpdateProduct(c echo.Context) error {
-	return nil
+	id := c.QueryParam("id")
+
+	newProduct := new(types.ReqProduct)
+
+	if err := c.Bind(newProduct); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	product, err := h.s.UpdateProduct(&types.Product{
+		ID:         id,
+		Name:       newProduct.Name,
+		Price:      newProduct.Price,
+		CategoryID: newProduct.CategoryID,
+	},
+		newProduct.Properties)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, product)
 }
 
 func (h *Handlers) DeleteProduct(c echo.Context) error {

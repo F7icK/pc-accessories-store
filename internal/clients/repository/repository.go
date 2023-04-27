@@ -12,9 +12,12 @@ type Storage interface {
 	GetProduct(productID string) (*types.ProductResp, error)
 	AddProduct(tx *gorm.DB, product *types.Product) (*types.Product, error)
 	GetCategory(categoryID string) (*types.Category, error)
+	GetProductByName(nameProduct string) (*types.Product, error)
 	AddProperty(tx *gorm.DB, property *types.Property) (*types.Property, error)
 	AddProductProperty(tx *gorm.DB, property *types.ProductProperty) error
-	UpdateProduct(product *types.Product) (*types.Product, error)
+	UpdateProduct(tx *gorm.DB, product *types.Product) (*types.Product, error)
+	GetProductPropertiesByProductID(productID string) ([]types.ProductProperty, error)
+	DeleteOldProductProperties(tx *gorm.DB, productID string, productProperties []string) error
 	DeleteProduct(product *types.Product) (*types.Product, error)
 	AddCategory(category *types.Category) (*types.Category, error)
 }
