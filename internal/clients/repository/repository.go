@@ -10,7 +10,10 @@ type Storage interface {
 	Begin() *gorm.DB
 
 	GetProduct(productID string) (*types.ProductResp, error)
-	AddProduct(product *types.Product) (*types.Product, error)
+	AddProduct(tx *gorm.DB, product *types.Product) (*types.Product, error)
+	GetCategory(categoryID string) (*types.Category, error)
+	AddProperty(tx *gorm.DB, property *types.Property) (*types.Property, error)
+	AddProductProperty(tx *gorm.DB, property *types.ProductProperty) error
 	UpdateProduct(product *types.Product) (*types.Product, error)
 	DeleteProduct(product *types.Product) (*types.Product, error)
 	AddCategory(category *types.Category) (*types.Category, error)

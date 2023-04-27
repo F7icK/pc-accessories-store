@@ -37,11 +37,53 @@ func (s *StorageService) GetProduct(productID string) (*types.ProductResp, error
 	return product, nil
 }
 
-func (s *StorageService) NewProduct(product *types.Product) (*types.Product, error) {
+func (s *StorageService) NewProduct(newProduct *types.Product, productProperty []types.ProductPropertyResp) (*types.ProductResp, error) {
+	if !IsValidUUID(newProduct.CategoryID) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "select a category")
+	}
+
+	_, err := s.db.GetCategory(newProduct.CategoryID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "need valid category id")
+		}
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
 	tx := s.db.Begin()
+
+	product, err := s.db.AddProduct(tx, newProduct)
+	if err != nil {
+		return nil, echo.ErrInternalServerError
+	}
+
+	if len(productProperty) != 0 {
+		for _, prop := range productProperty {
+			property, err := s.db.AddProperty(tx, &types.Property{
+				Name: prop.Name,
+			})
+			if err != nil {
+				return nil, echo.ErrInternalServerError
+			}
+
+			if err = s.db.AddProductProperty(tx, &types.ProductProperty{
+				ProductID:  product.ID,
+				PropertyID: property.ID,
+				Value:      prop.Value,
+			}); err != nil {
+				return nil, echo.ErrInternalServerError
+			}
+		}
+	}
+
 	tx.Commit()
 
-	return product, nil
+	productResp, err := s.db.GetProduct(product.ID)
+	if err != nil {
+		return nil, echo.ErrInternalServerError
+	}
+
+	return productResp, nil
 }
 
 func (s *StorageService) NewCategory(newCategory *types.Category) (*types.Category, error) {

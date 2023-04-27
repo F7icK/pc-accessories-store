@@ -31,7 +31,7 @@ func (h *Handlers) AddCategory(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, category)
+	return c.JSON(http.StatusCreated, category)
 }
 
 func (h *Handlers) GetProducts(c echo.Context) error {
@@ -50,9 +50,10 @@ func (h *Handlers) GetProduct(c echo.Context) error {
 }
 
 type reqProduct struct {
-	Name       string `json:"name"`
-	Price      int    `json:"price"`
-	CategoryID string `json:"category_id"`
+	Name       string                      `json:"name"`
+	Price      int                         `json:"price"`
+	CategoryID string                      `json:"category_id"`
+	Properties []types.ProductPropertyResp `json:"properties"`
 }
 
 func (h *Handlers) AddProduct(c echo.Context) error {
@@ -66,12 +67,12 @@ func (h *Handlers) AddProduct(c echo.Context) error {
 		Name:       newProduct.Name,
 		Price:      newProduct.Price,
 		CategoryID: newProduct.CategoryID,
-	})
+	}, newProduct.Properties)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, product)
+	return c.JSON(http.StatusCreated, product)
 }
 
 func (h *Handlers) UpdateProduct(c echo.Context) error {

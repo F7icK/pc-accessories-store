@@ -8,7 +8,7 @@ import (
 
 type Storage interface {
 	GetProduct(productID string) (*types.ProductResp, error)
-	NewProduct(product *types.Product) (*types.Product, error)
+	NewProduct(newProduct *types.Product, productProperty []types.ProductPropertyResp) (*types.ProductResp, error)
 
 	NewCategory(category *types.Category) (*types.Category, error)
 }
