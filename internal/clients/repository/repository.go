@@ -22,6 +22,7 @@ type Storage interface {
 	DeleteProductPropertiesByProductID(tx *gorm.DB, productID string) error
 	DeleteProduct(tx *gorm.DB, product *types.Product) error
 	AddCategory(category *types.Category) (*types.Category, error)
+	GetCategories() ([]types.CategoriesResp, error)
 }
 
 type Repository struct {

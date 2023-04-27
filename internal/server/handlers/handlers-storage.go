@@ -8,7 +8,11 @@ import (
 )
 
 func (h *Handlers) GetCategories(c echo.Context) error {
-	return nil
+	categories, err := h.s.GetCategories()
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, categories)
 }
 
 func (h *Handlers) AddCategory(c echo.Context) error {

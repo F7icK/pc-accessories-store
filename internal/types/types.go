@@ -71,3 +71,9 @@ type ReqProduct struct {
 	CategoryID string                `json:"category_id"`
 	Properties []ProductPropertyResp `json:"properties"`
 }
+
+type CategoriesResp struct {
+	ID         string `json:"id" gorm:"column:id"`
+	Name       string `json:"name" gorm:"column:name"`
+	ParentName string `json:"parent_name" gorm:"column:parent_name"`
+}

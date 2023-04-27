@@ -11,6 +11,7 @@ type Storage interface {
 	NewProduct(newProduct *types.Product, productProperty []types.ProductPropertyResp) (*types.ProductResp, error)
 	UpdateProduct(product *types.Product, productProperty []types.ProductPropertyResp) (*types.ProductResp, error)
 	DeleteProduct(productID string) error
+	GetCategories() ([]types.CategoriesResp, error)
 
 	NewCategory(category *types.Category) (*types.Category, error)
 }

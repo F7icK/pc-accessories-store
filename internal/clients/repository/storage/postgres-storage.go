@@ -43,6 +43,7 @@ func (p *StoragePostgres) GetProduct(productID string) (*types.ProductResp, erro
 
 	return product, nil
 }
+
 func (p *StoragePostgres) GetProductByName(nameProduct string) (*types.Product, error) {
 	product := new(types.Product)
 
@@ -151,4 +152,15 @@ func (p *StoragePostgres) GetProductPropertiesByProductID(productID string) ([]t
 	}
 
 	return ProductProperties, nil
+}
+
+func (p *StoragePostgres) GetCategories() ([]types.CategoriesResp, error) {
+	product := make([]types.CategoriesResp, 0)
+
+	if err := p.db.Debug().Table("categories c1").
+		Joins("RIGHT JOIN categories c2 on c2.parent_id = c1.id").
+		Select("c2.id, c2.name, c1.name AS parent_name").Find(&product).Error; err != nil {
+		return nil, err
+	}
+	return product, nil
 }

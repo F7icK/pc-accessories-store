@@ -179,3 +179,12 @@ func (s *StorageService) DeleteProduct(productID string) error {
 
 	return nil
 }
+
+func (s *StorageService) GetCategories() ([]types.CategoriesResp, error) {
+	categories, err := s.db.GetCategories()
+	if err != nil {
+		return nil, echo.ErrInternalServerError
+	}
+
+	return categories, nil
+}
