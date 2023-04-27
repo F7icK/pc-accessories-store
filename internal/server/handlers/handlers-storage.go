@@ -87,5 +87,11 @@ func (h *Handlers) UpdateProduct(c echo.Context) error {
 }
 
 func (h *Handlers) DeleteProduct(c echo.Context) error {
-	return nil
+	productID := c.QueryParam("id")
+
+	if err := h.s.DeleteProduct(productID); err != nil {
+		return err
+	}
+
+	return c.NoContent(http.StatusOK)
 }

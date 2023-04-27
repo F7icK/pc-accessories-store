@@ -53,6 +53,16 @@ func (p *StoragePostgres) GetProductByName(nameProduct string) (*types.Product, 
 	return product, nil
 }
 
+func (p *StoragePostgres) GetProductByNameWithRemote(nameProduct string) (*types.Product, error) {
+	product := new(types.Product)
+
+	if err := p.db.Debug().Unscoped().Table("products").Where("name = ?", nameProduct).Take(product).Error; err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
 func (p *StoragePostgres) AddProduct(tx *gorm.DB, product *types.Product) (*types.Product, error) {
 	if err := tx.Debug().Table("products").Create(product).Error; err != nil {
 		return nil, err
@@ -112,11 +122,18 @@ func (p *StoragePostgres) DeleteOldProductProperties(tx *gorm.DB, productID stri
 	return nil
 }
 
-func (p *StoragePostgres) DeleteProduct(product *types.Product) (*types.Product, error) {
-	if err := p.db.Debug().Table("products").Where("id = ?", product.ID).Delete(product).Error; err != nil {
-		return nil, err
+func (p *StoragePostgres) DeleteProductPropertiesByProductID(tx *gorm.DB, productID string) error {
+	if err := tx.Debug().Table("product_properties").Where("product_id = ?", productID).Delete(&types.ProductProperty{}).Error; err != nil {
+		return err
 	}
-	return product, nil
+	return nil
+}
+
+func (p *StoragePostgres) DeleteProduct(tx *gorm.DB, product *types.Product) error {
+	if err := tx.Debug().Unscoped().Table("products").Where("id = ?", product.ID).Delete(product).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *StoragePostgres) AddCategory(category *types.Category) (*types.Category, error) {

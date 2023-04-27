@@ -49,11 +49,16 @@ func (s *StorageService) NewProduct(newProduct *types.Product, productProperty [
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if _, err := s.db.GetProductByName(newProduct.CategoryID); err != nil {
-		if err == gorm.ErrRecordNotFound {
+	oldProduct, err := s.db.GetProductByNameWithRemote(newProduct.Name)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	if oldProduct != nil {
+		if !oldProduct.DeletedAt.Valid {
 			return nil, echo.NewHTTPError(http.StatusBadRequest, "this product is already in the database")
 		}
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+
 	}
 
 	tx := s.db.Begin()
@@ -157,4 +162,20 @@ func (s *StorageService) UpdateProduct(product *types.Product, productProperty [
 func IsValidUUID(u string) bool {
 	_, err := uuid.Parse(u)
 	return err == nil
+}
+
+func (s *StorageService) DeleteProduct(productID string) error {
+	if !IsValidUUID(productID) {
+		return echo.NewHTTPError(http.StatusBadRequest, "no such product")
+	}
+
+	tx := s.db.Begin()
+
+	if err := s.db.DeleteProduct(tx, &types.Product{ID: productID}); err != nil {
+		return echo.ErrInternalServerError
+	}
+
+	tx.Commit()
+
+	return nil
 }
