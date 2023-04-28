@@ -34,7 +34,18 @@ func (h *Handlers) AddCategory(c echo.Context) error {
 }
 
 func (h *Handlers) GetProducts(c echo.Context) error {
-	return nil
+	filter := new(types.ReqFilterProducts)
+
+	filter.PropertyID = c.FormValue("property_id")
+	filter.PropertyVal = c.FormValue("property_val")
+	filter.CategoryID = c.FormValue("category_id")
+
+	products, err := h.s.GetProducts(filter)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, products)
 }
 
 func (h *Handlers) GetProduct(c echo.Context) error {

@@ -96,7 +96,6 @@ func (s *StorageService) NewProduct(newProduct *types.Product, productProperty [
 }
 
 func (s *StorageService) NewCategory(newCategory *types.Category) (*types.Category, error) {
-	// тут валидация, проверка дублирования и т.д. так как по условию не было, не буду тратить время на это
 	if newCategory.Name == "" {
 		return nil, echo.ErrBadRequest
 	}
@@ -187,4 +186,25 @@ func (s *StorageService) GetCategories() ([]types.CategoriesResp, error) {
 	}
 
 	return categories, nil
+}
+
+func (s *StorageService) GetProducts(filter *types.ReqFilterProducts) ([]types.ProductResp, error) {
+	if !IsValidUUID(filter.PropertyID) && filter.PropertyID != "" {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "bad filter, specify id property")
+	}
+
+	if filter.PropertyID != "" && filter.PropertyVal == "" {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "bad filter, specify the value of the property")
+	}
+
+	if !IsValidUUID(filter.CategoryID) && filter.CategoryID != "" {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "bad filter, specify id category")
+	}
+
+	products, err := s.db.GetProducts(filter)
+	if err != nil {
+		return nil, echo.ErrInternalServerError
+	}
+
+	return products, nil
 }

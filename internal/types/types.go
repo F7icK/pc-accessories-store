@@ -34,11 +34,6 @@ type ProductProperty struct {
 	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"column:deleted_at"`
 }
 
-type ProductPropertyResp struct {
-	Name  string `json:"name" gorm:"column:name"`
-	Value string `json:"value" gorm:"column:value"`
-}
-
 type Property struct {
 	ID        string         `json:"id" gorm:"primaryKey;type:uuid;default:uuid_generate_v4()"`
 	Name      string         `json:"name" gorm:"column:name"`
@@ -60,6 +55,12 @@ type ProductResp struct {
 	DeletedAt      gorm.DeletedAt        `json:"deleted_at" gorm:"column:deleted_at"`
 }
 
+type ProductPropertyResp struct {
+	PropertyID string `json:"property_id"`
+	Name       string `json:"name" gorm:"column:name"`
+	Value      string `json:"value" gorm:"column:value"`
+}
+
 type ReqCategory struct {
 	Name     string `json:"name"`
 	ParentID string `json:"parent_id"`
@@ -76,4 +77,10 @@ type CategoriesResp struct {
 	ID         string `json:"id" gorm:"column:id"`
 	Name       string `json:"name" gorm:"column:name"`
 	ParentName string `json:"parent_name" gorm:"column:parent_name"`
+}
+
+type ReqFilterProducts struct {
+	PropertyID  string `json:"property_id"`
+	PropertyVal string `json:"property_val"`
+	CategoryID  string `json:"category_id"`
 }

@@ -23,6 +23,7 @@ type Storage interface {
 	DeleteProduct(tx *gorm.DB, product *types.Product) error
 	AddCategory(category *types.Category) (*types.Category, error)
 	GetCategories() ([]types.CategoriesResp, error)
+	GetProducts(filter *types.ReqFilterProducts) ([]types.ProductResp, error)
 }
 
 type Repository struct {

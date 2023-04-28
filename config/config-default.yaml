@@ -1,4 +1,4 @@
-postgres_dsn: "host=localhost port=5432 user=postgres password=postgres dbname=postgres sslmode=disable"
+postgres_dsn: "host=192.168.1.102 port=5432 user=flick password=0162543 dbname=pc_store sslmode=disable"
 
 http:
   server_port: ":8010"
