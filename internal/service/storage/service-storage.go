@@ -85,7 +85,9 @@ func (s *StorageService) NewProduct(newProduct *types.Product, productProperty [
 		}
 	}
 
-	tx.Commit()
+	if err = tx.Commit().Error; err != nil {
+		return nil, echo.ErrInternalServerError
+	}
 
 	productResp, err := s.db.GetProduct(product.ID)
 	if err != nil {
@@ -128,7 +130,9 @@ func (s *StorageService) UpdateProduct(product *types.Product, productProperty [
 	}
 
 	if doubleProduct != nil {
-		return nil, echo.NewHTTPError(http.StatusBadRequest, "a product with the same name already exists")
+		if doubleProduct.Name != product.Name {
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "a product with the same name already exists")
+		}
 	}
 
 	if _, err := s.db.UpdateProduct(tx, product); err != nil {
@@ -153,11 +157,13 @@ func (s *StorageService) UpdateProduct(product *types.Product, productProperty [
 		arrPropertyID = append(arrPropertyID, property.ID)
 	}
 
-	if err := s.db.DeleteOldProductProperties(tx, product.ID, arrPropertyID); err != nil {
+	if err = s.db.DeleteOldProductProperties(tx, product.ID, arrPropertyID); err != nil {
 		return nil, echo.ErrInternalServerError
 	}
 
-	tx.Commit()
+	if err = tx.Commit().Error; err != nil {
+		return nil, echo.ErrInternalServerError
+	}
 
 	productResp, err := s.db.GetProduct(product.ID)
 	if err != nil {
@@ -183,7 +189,9 @@ func (s *StorageService) DeleteProduct(productID string) error {
 		return echo.ErrInternalServerError
 	}
 
-	tx.Commit()
+	if err := tx.Commit().Error; err != nil {
+		return echo.ErrInternalServerError
+	}
 
 	return nil
 }
