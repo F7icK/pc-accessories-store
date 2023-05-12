@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/F7icK/pc-accessories-store/internal/types"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type StoragePostgres struct {
@@ -46,6 +47,33 @@ func (p *StoragePostgres) GetProduct(productID string) (*types.ProductResp, erro
 	return product, nil
 }
 
+func (p *StoragePostgres) GetProductTx(tx *gorm.DB, productID string) (*types.ProductResp, error) {
+	product := new(types.ProductResp)
+	if err := tx.Debug().
+		Select(`p.id, p.name, p.price, p.category_id, c.name as category,
+			(SELECT name FROM categories WHERE id = c.parent_id) AS parent_category,
+			p.created_at, p.updated_at, p.deleted_at`).
+		Table("products p").
+		Joins("JOIN categories c on c.id = p.category_id").
+		Where("p.id = ?", productID).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Take(product).Error; err != nil {
+		return nil, err
+	}
+
+	if err := tx.Debug().
+		Select("p2.id AS property_id, p2.name, p1.value").
+		Table("product_properties p1").
+		Joins("JOIN properties p2 on p2.id = p1.property_id").
+		Where("p1.product_id = ? AND p1.deleted_at IS NULL", productID).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Find(&product.Properties).Error; err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
 func (p *StoragePostgres) GetProductByName(nameProduct string) (*types.Product, error) {
 	product := new(types.Product)
 
@@ -59,10 +87,24 @@ func (p *StoragePostgres) GetProductByName(nameProduct string) (*types.Product, 
 	return product, nil
 }
 
-func (p *StoragePostgres) GetProductByNameWithRemote(nameProduct string) (*types.Product, error) {
+func (p *StoragePostgres) GetProductByNameTx(tx *gorm.DB, nameProduct string) (*types.Product, error) {
 	product := new(types.Product)
 
-	if err := p.db.Debug().Unscoped().
+	if err := tx.Debug().
+		Table("products").
+		Where("name = ?", nameProduct).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Take(product).Error; err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
+func (p *StoragePostgres) GetProductByNameWithRemoteTx(tx *gorm.DB, nameProduct string) (*types.Product, error) {
+	product := new(types.Product)
+
+	if err := tx.Debug().Unscoped().
 		Table("products").
 		Where("name = ?", nameProduct).
 		Take(product).Error; err != nil {

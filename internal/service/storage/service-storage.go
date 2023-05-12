@@ -49,7 +49,9 @@ func (s *StorageService) NewProduct(newProduct *types.Product, productProperty [
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	oldProduct, err := s.db.GetProductByNameWithRemote(newProduct.Name)
+	tx := s.db.Begin()
+
+	oldProduct, err := s.db.GetProductByNameWithRemoteTx(tx, newProduct.Name)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -60,8 +62,6 @@ func (s *StorageService) NewProduct(newProduct *types.Product, productProperty [
 		}
 
 	}
-
-	tx := s.db.Begin()
 
 	product, err := s.db.AddProduct(tx, newProduct)
 	if err != nil {
@@ -113,14 +113,23 @@ func (s *StorageService) UpdateProduct(product *types.Product, productProperty [
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "no such product")
 	}
 
-	if _, err := s.db.GetProduct(product.ID); err != nil {
+	tx := s.db.Begin()
+
+	if _, err := s.db.GetProductTx(tx, product.ID); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, echo.NewHTTPError(http.StatusBadRequest, "no such product")
 		}
 		return nil, echo.ErrInternalServerError
 	}
 
-	tx := s.db.Begin()
+	doubleProduct, err := s.db.GetProductByNameTx(tx, product.Name)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, echo.ErrInternalServerError
+	}
+
+	if doubleProduct != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "a product with the same name already exists")
+	}
 
 	if _, err := s.db.UpdateProduct(tx, product); err != nil {
 		return nil, echo.ErrInternalServerError
